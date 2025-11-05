@@ -28,4 +28,9 @@ export interface HostConfiguration {
      * A map of secret name and their respective regex pattern
      */
     secretPatterns?: Record<string, string>
+
+    /**
+     * List of plugins to load (file paths or npm package names)
+     */
+    plugins?: string[]
 }
