@@ -9,11 +9,11 @@ export {
     type PluginSetupFunction,
     type PluginExtensionContext,
     type PluginModule,
+    type LoadedPlugin,
 } from "./plugin"
 
 export {
     loadPlugin,
     loadPlugins,
     applyPluginExtensions,
-    type LoadedPlugin,
 } from "./pluginloader"
