@@ -403,6 +403,7 @@ export async function createPromptContext(
         retrieval,
         host: promptHost,
     }
+
     env.generator = ctx
     env.vars = proxifyEnvVars(env.vars)
     ctx.env = Object.freeze<ExpansionVariables>(env as ExpansionVariables)
