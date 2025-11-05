@@ -32,6 +32,90 @@ interface Diagnostic {
 
 type Awaitable<T> = T | PromiseLike<T>
 
+/**
+ * Context provided to plugins for extension
+ */
+interface ExtendContext {
+    /**
+     * Global context - utility functions and project-specific helpers
+     * Can be extended with custom properties and methods
+     */
+    global: Record<string, any>
+
+    /**
+     * Host context - host capabilities (database connections, API clients, etc.)
+     * Can be extended with custom host operations
+     */
+    host: Record<string, any>
+
+    /**
+     * Workspace context - workspace-level functionality
+     * Can be extended with workspace operations
+     */
+    workspace: Record<string, any>
+
+    /**
+     * Parsers context - custom file parsers
+     * Can be extended with custom file format parsers
+     */
+    parsers: Record<string, any>
+}
+
+/**
+ * Options provided to plugin setup
+ */
+interface PluginSetupOptions {
+    /**
+     * Trace for logging
+     */
+    trace?: any
+
+    /**
+     * Cancellation token
+     */
+    cancellationToken?: AbortSignal
+
+    /**
+     * Model identifier
+     */
+    model?: string
+}
+
+/**
+ * Plugin definition
+ */
+interface Plugin {
+    /**
+     * Unique identifier for the plugin
+     */
+    id: string
+
+    /**
+     * Human-readable name of the plugin
+     */
+    name: string
+
+    /**
+     * Description of what the plugin does
+     */
+    description?: string
+
+    /**
+     * Version of the plugin
+     */
+    version?: string
+
+    /**
+     * Setup function called when the plugin is loaded
+     * @param extend - Callback to extend contexts
+     * @param options - Additional options including trace and cancellation
+     */
+    setup(
+        extend: (context: ExtendContext) => void | Promise<void>,
+        options?: PluginSetupOptions
+    ): void | Promise<void>
+}
+
 interface SerializedError {
     name?: string
     message?: string
