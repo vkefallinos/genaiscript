@@ -400,14 +400,15 @@ export async function createPromptContext(
     // Get plugin extensions
     const pluginExtensions = globalPluginRegistry.getAllExtensions()
 
-    // Apply plugin extensions to workspace
+    // Apply plugin extensions to workspace (workspace is mutable)
     if (pluginExtensions.workspace) {
         Object.assign(workspace, pluginExtensions.workspace)
     }
 
-    // Apply plugin extensions to parsers
-    if (pluginExtensions.parsers) {
-        Object.assign(parsers, pluginExtensions.parsers)
+    // Create extended parsers with plugin extensions (parsers is frozen, so create new object)
+    const extendedParsers = {
+        ...parsers,
+        ...(pluginExtensions.parsers || {}),
     }
 
     // Create extended host with plugin extensions
@@ -426,7 +427,7 @@ export async function createPromptContext(
         path,
         fs: workspace,
         workspace,
-        parsers,
+        parsers: extendedParsers as Parsers,
         retrieval,
         host: extendedHost as PromptHost,
     }

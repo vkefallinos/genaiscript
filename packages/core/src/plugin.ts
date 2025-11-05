@@ -101,6 +101,7 @@ export class PluginRegistry {
         workspace: {},
         parsers: {},
     }
+    private loaded: boolean = false
 
     /**
      * Register a plugin
@@ -110,6 +111,8 @@ export class PluginRegistry {
             throw new Error(`Plugin with id '${plugin.id}' is already registered`)
         }
         this.plugins.push(plugin)
+        // Reset loaded flag when new plugins are registered
+        this.loaded = false
     }
 
     /**
@@ -123,8 +126,14 @@ export class PluginRegistry {
 
     /**
      * Load all registered plugins
+     * Only loads plugins once unless clear() is called or new plugins are registered
      */
     async load(options?: PluginSetupOptions): Promise<void> {
+        // Skip if already loaded
+        if (this.loaded) {
+            return
+        }
+
         const { trace } = options || {}
 
         for (const plugin of this.plugins) {
@@ -143,6 +152,8 @@ export class PluginRegistry {
                 throw error
             }
         }
+
+        this.loaded = true
     }
 
     /**
@@ -195,6 +206,7 @@ export class PluginRegistry {
             workspace: {},
             parsers: {},
         }
+        this.loaded = false
     }
 
     /**
