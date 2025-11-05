@@ -1,173 +1,121 @@
 # GenAIScript Plugin Examples
 
-This directory contains example plugins demonstrating how to extend GenAIScript functionality using the plugin API.
+This directory contains example plugins demonstrating how to extend GenAIScript's functionality.
 
-## Plugin Architecture
+## Plugin System Overview
 
-Plugins allow you to extend GenAIScript in four key areas:
-
-1. **Global Context** - Add utility functions and helpers available throughout script execution
-2. **Host Context** - Register custom host capabilities (e.g., database connections, API clients)
-3. **Workspace Context** - Add workspace-level functionality (e.g., custom file operations)
-4. **Parsers Context** - Register custom file parsers for new file formats
+The GenAIScript plugin system allows you to extend core contexts (global, host, workspace, parsers) through a simple API.
 
 ## Creating a Plugin
 
-A plugin is a JavaScript/TypeScript object that implements the `Plugin` interface:
+A plugin is a JavaScript/TypeScript module that exports a plugin definition:
 
-```typescript
-interface Plugin {
-    id: string              // Unique identifier
-    name: string            // Human-readable name
-    description?: string    // What the plugin does
-    version?: string        // Plugin version
-    setup(extend, options)  // Setup function
-}
-```
-
-### The `setup` Function
-
-The setup function receives two parameters:
-
-1. **extend** - A callback function that receives an `ExtendContext` object with:
-   - `global` - Object to add global utilities
-   - `host` - Object to add host capabilities
-   - `workspace` - Object to add workspace operations
-   - `parsers` - Object to add custom parsers
-
-2. **options** - Optional configuration:
-   - `trace` - For logging
-   - `cancellationToken` - For cancellation support
-   - `model` - Model identifier
-
-### Example: Basic Plugin
-
-```typescript
-const myPlugin = {
-    id: "my-plugin",
-    name: "My Plugin",
-    description: "Adds custom functionality",
-    version: "1.0.0",
-    
+```javascript
+export default {
+    name: 'my-plugin',
     setup(extend, options) {
-        extend({
-            global: {
-                myUtility() {
-                    return "Hello from plugin!"
-                }
-            }
+        extend((context) => {
+            // Add your extensions here
+            context.global.myFunction = () => { /* ... */ }
         })
     }
 }
 ```
 
-## Available Examples
+## Using Plugins
 
-### 1. Custom Parser Plugin (`custom-parser-plugin.js`)
+Add plugins to your `genaiscript.config.json`:
 
-Demonstrates how to add a custom file parser for `.proto` files (Protocol Buffers).
-
-**Key Features:**
-- Registers a new parser for `.proto` format
-- Shows async parser implementation
-- Demonstrates error handling in parsers
-
-**Usage:**
-```typescript
-const result = await parsers.PROTO("path/to/file.proto")
+```json
+{
+    "plugins": [
+        "./plugins/my-plugin.js",
+        "genaiscript-plugin-database"
+    ]
+}
 ```
 
-### 2. Global Utilities Plugin (`global-utils-plugin.js`)
+### Local Plugins
 
-Adds utility functions to the global context.
+Local plugins are specified using relative paths:
+- `./plugins/my-plugin.js`
+- `../shared/plugin.mjs`
 
-**Key Features:**
-- String manipulation utilities
-- Data transformation helpers
-- Math utilities
+### npm Plugins
 
-**Usage:**
-```typescript
-const slug = slugify("Hello World")  // "hello-world"
-const chunks = chunkArray([1,2,3,4], 2)  // [[1,2], [3,4]]
-```
+npm plugins are specified by package name:
+- `genaiscript-plugin-database`
+- `@scope/genaiscript-plugin`
 
-### 3. Host Capabilities Plugin (`host-capabilities-plugin.js`)
+## Plugin API
 
-Extends host with custom capabilities like database connections.
-
-**Key Features:**
-- Mock database connection
-- Custom API client
-- Resource management
-
-**Usage:**
-```typescript
-const db = await host.database("mydb")
-const result = await db.query("SELECT * FROM users")
-```
-
-## Registering Plugins
-
-To use plugins in your GenAIScript environment:
+### Plugin Definition
 
 ```typescript
-import { globalPluginRegistry } from "genaiscript/core"
-import myPlugin from "./my-plugin"
-
-// Register a single plugin
-globalPluginRegistry.register(myPlugin)
-
-// Register multiple plugins
-globalPluginRegistry.registerAll([plugin1, plugin2, plugin3])
+interface PluginDefinition {
+    name: string
+    setup: (extend, options?) => void | Promise<void>
+}
 ```
 
-Plugins are loaded automatically when a prompt context is created.
+### Extension Context
+
+The context object passed to extension callbacks contains:
+
+- `context.global` - Global context extensions
+- `context.host` - Host context extensions
+- `context.workspace` - Workspace context extensions
+- `context.parsers` - Parser context extensions
+
+### Example Plugin
+
+See `example-plugin.mjs` for a complete example that demonstrates:
+- Adding custom global functions
+- Registering custom file parsers
+- Extending workspace functionality
+- Adding host services
+
+## Running the Example
+
+1. Add the plugin to your configuration:
+   ```json
+   {
+       "plugins": ["./examples/plugins/example-plugin.mjs"]
+   }
+   ```
+
+2. The plugin will be loaded automatically when GenAIScript starts.
+
+3. Your custom extensions will be available in your scripts.
 
 ## Best Practices
 
-1. **Unique IDs**: Always use unique plugin IDs to avoid conflicts
-2. **Error Handling**: Implement proper error handling in plugin functions
-3. **Documentation**: Document your plugin functions and their parameters
-4. **Type Safety**: Use TypeScript for better type safety and IDE support
-5. **Testing**: Write tests for your plugin functionality
-6. **Async Operations**: Support cancellation tokens for long-running operations
+1. **Naming**: Use descriptive, unique names for your plugins
+2. **Error Handling**: Handle errors gracefully in your plugin code
+3. **Documentation**: Document your plugin's API for users
+4. **Testing**: Write tests for your plugin functionality
+5. **Type Safety**: Provide TypeScript definitions when possible
+6. **Async Setup**: Use async setup if you need to perform I/O operations
 
-## API Reference
+## Publishing Plugins
 
-### ExtendContext
+To share your plugin with others:
 
-```typescript
-interface ExtendContext {
-    global: Record<string, any>     // Global utilities
-    host: Record<string, any>       // Host capabilities  
-    workspace: Record<string, any>  // Workspace operations
-    parsers: Record<string, any>    // Custom parsers
+1. Create an npm package with name like `genaiscript-plugin-{name}`
+2. Export your plugin definition as the default export
+3. Include TypeScript definitions if available
+4. Document usage in your README
+5. Publish to npm
+
+Example package.json:
+
+```json
+{
+    "name": "genaiscript-plugin-database",
+    "version": "1.0.0",
+    "main": "index.js",
+    "exports": {
+        ".": "./index.js"
+    }
 }
 ```
-
-### PluginSetupOptions
-
-```typescript
-interface PluginSetupOptions {
-    trace?: any               // Trace for logging
-    cancellationToken?: AbortSignal  // Cancellation support
-    model?: string            // Model identifier
-}
-```
-
-## Contributing
-
-When creating plugins:
-
-1. Follow the naming convention: `<functionality>-plugin.js`
-2. Include comprehensive documentation
-3. Add tests for plugin functionality
-4. Ensure backward compatibility
-5. Handle edge cases gracefully
-
-## More Information
-
-For more information on GenAIScript plugin development, see the main documentation at:
-- [Plugin Architecture Guide](../../docs/plugins.md)
-- [API Reference](../../docs/api-reference.md)

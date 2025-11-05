@@ -1,0 +1,10 @@
+{
+    "$schema": "../../docs/public/schemas/config.json",
+    "plugins": [
+        "./example-plugin.mjs"
+    ],
+    "modelAliases": {
+        "default": "gpt-4"
+    },
+    "envFile": ".env"
+}

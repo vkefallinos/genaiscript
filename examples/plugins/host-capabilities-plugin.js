@@ -3,25 +3,28 @@
  * 
  * Demonstrates how to extend the host context with custom capabilities
  * like database connections, API clients, and resource management
+ * 
+ * To use this plugin, add it to your genaiscript.config.json:
+ * {
+ *   "plugins": ["./examples/plugins/host-capabilities-plugin.js"]
+ * }
  */
 
-const hostCapabilitiesPlugin = {
-    id: "host-capabilities",
-    name: "Host Capabilities Plugin",
-    description: "Adds database connections, API clients, and custom resource management",
-    version: "1.0.0",
+export default {
+    name: "host-capabilities-plugin",
 
     setup(extend, options) {
-        const { trace, cancellationToken } = options || {}
+        const trace = options?.trace
+        const cancellationToken = options?.cancellationToken
 
-        extend({
-            host: {
+        extend((context) => {
+            if (!context.host) context.host = {}
                 /**
                  * Create a mock database connection
                  * @param connectionString - Database connection string
                  * @returns Database client interface
                  */
-                async database(connectionString) {
+            context.host.database = async function(connectionString) {
                     trace?.log(`Connecting to database: ${connectionString}`)
 
                     // Mock database client
@@ -84,7 +87,7 @@ const hostCapabilitiesPlugin = {
                  * @param options - Client options
                  * @returns API client interface
                  */
-                apiClient(baseUrl, options = {}) {
+            context.host.apiClient = function(baseUrl, options = {}) {
                     const { headers = {}, timeout = 30000 } = options
                     trace?.log(`Creating API client for: ${baseUrl}`)
 
@@ -168,7 +171,7 @@ const hostCapabilitiesPlugin = {
                  * @param options - Pool options
                  * @returns Resource pool manager
                  */
-                resourcePool(resourceFactory, options = {}) {
+            context.host.resourcePool = function(resourceFactory, options = {}) {
                     const { maxSize = 10, minSize = 2 } = options
                     const pool = []
                     const inUse = new Set()
@@ -243,7 +246,7 @@ const hostCapabilitiesPlugin = {
                  * Create a simple event emitter for custom events
                  * @returns Event emitter interface
                  */
-                eventEmitter() {
+            context.host.eventEmitter = function() {
                     const listeners = new Map()
 
                     return {
@@ -287,15 +290,9 @@ const hostCapabilitiesPlugin = {
                             }
                         },
                     }
-                },
-            },
+                }
+
+            trace?.log?.("Host Capabilities Plugin loaded successfully")
         })
-
-        trace?.log("Host Capabilities Plugin loaded successfully")
-    },
-}
-
-// Export for use in other modules
-if (typeof module !== "undefined" && module.exports) {
-    module.exports = hostCapabilitiesPlugin
+    }
 }

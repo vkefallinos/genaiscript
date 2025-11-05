@@ -93,6 +93,14 @@
             },
             "additionalProperties": true,
             "description": "Secret scanners to use for scanning chat messages"
+        },
+        "plugins": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "description": "Plugin file path (e.g., './plugins/my-plugin.js') or npm package name (e.g., 'genaiscript-plugin-database')"
+            },
+            "description": "List of plugins to load for extending GenAIScript functionality"
         }
     }
 }

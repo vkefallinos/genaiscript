@@ -3,25 +3,27 @@
  * 
  * Demonstrates how to add a custom file parser for Protocol Buffers (.proto files)
  * and GraphQL schema files (.graphql)
+ * 
+ * To use this plugin, add it to your genaiscript.config.json:
+ * {
+ *   "plugins": ["./examples/plugins/custom-parser-plugin.js"]
+ * }
  */
 
-const customParserPlugin = {
-    id: "custom-parser",
-    name: "Custom Parser Plugin",
-    description: "Adds parsers for .proto and .graphql files",
-    version: "1.0.0",
+export default {
+    name: "custom-parser-plugin",
 
     setup(extend, options) {
-        const { trace } = options || {}
+        const trace = options?.trace
 
-        extend({
-            parsers: {
-                /**
-                 * Parse Protocol Buffer (.proto) files
-                 * @param content - The .proto file content or path
-                 * @returns Parsed proto structure
-                 */
-                async PROTO(content) {
+        extend((context) => {
+            if (!context.parsers) context.parsers = {}
+            /**
+             * Parse Protocol Buffer (.proto) files
+             * @param content - The .proto file content or path
+             * @returns Parsed proto structure
+             */
+            context.parsers.PROTO = async function(content) {
                     try {
                         // Get file content if path is provided
                         let protoContent = content
@@ -124,17 +126,17 @@ const customParserPlugin = {
                             enums,
                         }
                     } catch (error) {
-                        trace?.error(`Failed to parse .proto file: ${error.message}`)
+                        trace?.error?.(`Failed to parse .proto file: ${error.message}`)
                         return undefined
                     }
-                },
+                }
 
-                /**
-                 * Parse GraphQL schema files
-                 * @param content - The .graphql file content or path
-                 * @returns Parsed GraphQL schema structure
-                 */
-                async GRAPHQL(content) {
+            /**
+             * Parse GraphQL schema files
+             * @param content - The .graphql file content or path
+             * @returns Parsed GraphQL schema structure
+             */
+            context.parsers.GRAPHQL = async function(content) {
                     try {
                         let schemaContent = content
                         if (typeof content === "object" && content.content) {
@@ -210,18 +212,12 @@ const customParserPlugin = {
                             mutations,
                         }
                     } catch (error) {
-                        trace?.error(`Failed to parse .graphql file: ${error.message}`)
+                        trace?.error?.(`Failed to parse .graphql file: ${error.message}`)
                         return undefined
                     }
-                },
-            },
+                }
+
+            trace?.log?.("Custom Parser Plugin loaded successfully")
         })
-
-        trace?.log("Custom Parser Plugin loaded successfully")
-    },
-}
-
-// Export for use in other modules
-if (typeof module !== "undefined" && module.exports) {
-    module.exports = customParserPlugin
+    }
 }

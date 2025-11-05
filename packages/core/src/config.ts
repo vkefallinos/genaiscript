@@ -99,6 +99,10 @@ async function resolveGlobalConfiguration(
                     config?.secretPatterns || {},
                     parsed?.secretPatterns || {}
                 ),
+                plugins: structuralMerge(
+                    config?.plugins || [],
+                    parsed?.plugins || []
+                ),
             })
         }
     }

@@ -3,25 +3,27 @@
  * 
  * Demonstrates how to extend the global context with utility functions
  * that are available throughout script execution
+ * 
+ * To use this plugin, add it to your genaiscript.config.json:
+ * {
+ *   "plugins": ["./examples/plugins/global-utils-plugin.js"]
+ * }
  */
 
-const globalUtilsPlugin = {
-    id: "global-utils",
-    name: "Global Utilities Plugin",
-    description: "Adds utility functions for string manipulation, data transformation, and more",
-    version: "1.0.0",
+export default {
+    name: "global-utils-plugin",
 
     setup(extend, options) {
-        const { trace } = options || {}
+        const trace = options?.trace
 
-        extend({
-            global: {
-                /**
-                 * Convert a string to slug format (lowercase with hyphens)
-                 * @param text - The text to slugify
-                 * @returns Slugified text
-                 */
-                slugify(text) {
+        extend((context) => {
+            if (!context.global) context.global = {}
+            /**
+             * Convert a string to slug format (lowercase with hyphens)
+             * @param text - The text to slugify
+             * @returns Slugified text
+             */
+            context.global.slugify = function(text) {
                     return text
                         .toString()
                         .toLowerCase()
@@ -31,7 +33,7 @@ const globalUtilsPlugin = {
                         .replace(/\-\-+/g, "-")         // Replace multiple - with single -
                         .replace(/^-+/, "")             // Trim - from start of text
                         .replace(/-+$/, "")             // Trim - from end of text
-                },
+                }
 
                 /**
                  * Chunk an array into smaller arrays of specified size
@@ -39,7 +41,7 @@ const globalUtilsPlugin = {
                  * @param size - Size of each chunk
                  * @returns Array of chunks
                  */
-                chunkArray(array, size) {
+            context.global.chunkArray = function(array, size) {
                     if (!Array.isArray(array)) {
                         throw new Error("First argument must be an array")
                     }
@@ -52,7 +54,7 @@ const globalUtilsPlugin = {
                         chunks.push(array.slice(i, i + size))
                     }
                     return chunks
-                },
+                }
 
                 /**
                  * Debounce a function call
@@ -60,7 +62,7 @@ const globalUtilsPlugin = {
                  * @param wait - Wait time in milliseconds
                  * @returns Debounced function
                  */
-                debounce(func, wait) {
+            context.global.debounce = function(func, wait) {
                     let timeout
                     return function executedFunction(...args) {
                         const later = () => {
@@ -70,14 +72,14 @@ const globalUtilsPlugin = {
                         clearTimeout(timeout)
                         timeout = setTimeout(later, wait)
                     }
-                },
+                }
 
                 /**
                  * Deep clone an object
                  * @param obj - Object to clone
                  * @returns Deep cloned object
                  */
-                deepClone(obj) {
+            context.global.deepClone = function(obj) {
                     if (obj === null || typeof obj !== "object") {
                         return obj
                     }
@@ -96,16 +98,16 @@ const globalUtilsPlugin = {
                         }
                         return clonedObj
                     }
-                },
+                }
 
                 /**
                  * Get unique values from an array
                  * @param array - Array to filter
                  * @returns Array with unique values
                  */
-                unique(array) {
+            context.global.unique = function(array) {
                     return [...new Set(array)]
-                },
+                }
 
                 /**
                  * Group array of objects by a key
@@ -113,7 +115,7 @@ const globalUtilsPlugin = {
                  * @param key - Key to group by
                  * @returns Grouped object
                  */
-                groupBy(array, key) {
+            context.global.groupBy = function(array, key) {
                     return array.reduce((result, item) => {
                         const groupKey = item[key]
                         if (!result[groupKey]) {
@@ -122,26 +124,26 @@ const globalUtilsPlugin = {
                         result[groupKey].push(item)
                         return result
                     }, {})
-                },
+                }
 
                 /**
                  * Calculate sum of numbers in an array
                  * @param array - Array of numbers
                  * @returns Sum of all numbers
                  */
-                sum(array) {
+            context.global.sum = function(array) {
                     return array.reduce((acc, val) => acc + val, 0)
-                },
+                }
 
                 /**
                  * Calculate average of numbers in an array
                  * @param array - Array of numbers
                  * @returns Average of all numbers
                  */
-                average(array) {
+            context.global.average = function(array) {
                     if (array.length === 0) return 0
                     return this.sum(array) / array.length
-                },
+                }
 
                 /**
                  * Format a number with thousand separators
@@ -149,9 +151,9 @@ const globalUtilsPlugin = {
                  * @param separator - Separator character (default: ',')
                  * @returns Formatted number string
                  */
-                formatNumber(number, separator = ",") {
+            context.global.formatNumber = function(number, separator = ",") {
                     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, separator)
-                },
+                }
 
                 /**
                  * Truncate text to specified length with ellipsis
@@ -160,22 +162,22 @@ const globalUtilsPlugin = {
                  * @param ellipsis - Ellipsis string (default: '...')
                  * @returns Truncated text
                  */
-                truncate(text, maxLength, ellipsis = "...") {
+            context.global.truncate = function(text, maxLength, ellipsis = "...") {
                     if (text.length <= maxLength) return text
                     return text.substring(0, maxLength - ellipsis.length) + ellipsis
-                },
+                }
 
                 /**
                  * Capitalize first letter of each word
                  * @param text - Text to capitalize
                  * @returns Capitalized text
                  */
-                capitalize(text) {
+            context.global.capitalize = function(text) {
                     return text
                         .split(" ")
                         .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                         .join(" ")
-                },
+                }
 
                 /**
                  * Retry an async operation with exponential backoff
@@ -199,7 +201,7 @@ const globalUtilsPlugin = {
                         }
                     }
                     throw lastError
-                },
+                }
 
                 /**
                  * Create a hash map from an array using a key function
@@ -207,20 +209,14 @@ const globalUtilsPlugin = {
                  * @param keyFn - Function to extract key from item
                  * @returns Hash map
                  */
-                toHashMap(array, keyFn) {
+            context.global.toHashMap = function(array, keyFn) {
                     return array.reduce((map, item) => {
                         map[keyFn(item)] = item
                         return map
                     }, {})
-                },
-            },
+                }
+
+            trace?.log?.("Global Utilities Plugin loaded successfully")
         })
-
-        trace?.log("Global Utilities Plugin loaded successfully")
-    },
-}
-
-// Export for use in other modules
-if (typeof module !== "undefined" && module.exports) {
-    module.exports = globalUtilsPlugin
+    }
 }

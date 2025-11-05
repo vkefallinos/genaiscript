@@ -40,7 +40,6 @@ import { loadZ3Client } from "./z3"
 import { genaiscriptDebug } from "./debug"
 import { resolveLanguageModelConfigurations } from "./config"
 import { deleteUndefinedValues } from "./cleaners"
-import { globalPluginRegistry } from "./plugin"
 const dbg = genaiscriptDebug("promptcontext")
 
 /**
@@ -390,33 +389,6 @@ export async function createPromptContext(
             }),
     })
 
-    // Load plugin extensions
-    await globalPluginRegistry.load({
-        trace,
-        cancellationToken,
-        model,
-    })
-
-    // Get plugin extensions
-    const pluginExtensions = globalPluginRegistry.getAllExtensions()
-
-    // Apply plugin extensions to workspace (workspace is mutable)
-    if (pluginExtensions.workspace) {
-        Object.assign(workspace, pluginExtensions.workspace)
-    }
-
-    // Create extended parsers with plugin extensions (parsers is frozen, so create new object)
-    const extendedParsers = {
-        ...parsers,
-        ...(pluginExtensions.parsers || {}),
-    }
-
-    // Create extended host with plugin extensions
-    const extendedHost = {
-        ...promptHost,
-        ...(pluginExtensions.host || {}),
-    }
-
     // Freeze project options to prevent modification
     const projectOptions = Object.freeze({ prj, env })
     const ctx: PromptContext & RunPromptContextNode = {
@@ -427,14 +399,9 @@ export async function createPromptContext(
         path,
         fs: workspace,
         workspace,
-        parsers: extendedParsers as Parsers,
+        parsers,
         retrieval,
-        host: extendedHost as PromptHost,
-    }
-
-    // Apply plugin extensions to global context (ctx itself)
-    if (pluginExtensions.global) {
-        Object.assign(ctx, pluginExtensions.global)
+        host: promptHost,
     }
 
     env.generator = ctx
