@@ -4,23 +4,19 @@ This document demonstrates how to use the example plugins included in this direc
 
 ## Setup
 
-First, register the plugins you want to use:
+Configure plugins in your `genaiscript.config.json`:
 
-```typescript
-import { globalPluginRegistry } from "genaiscript/core"
-import customParserPlugin from "./examples/plugins/custom-parser-plugin"
-import globalUtilsPlugin from "./examples/plugins/global-utils-plugin"
-import hostCapabilitiesPlugin from "./examples/plugins/host-capabilities-plugin"
-
-// Register plugins
-globalPluginRegistry.registerAll([
-    customParserPlugin,
-    globalUtilsPlugin,
-    hostCapabilitiesPlugin,
-])
+```json
+{
+    "plugins": [
+        "./examples/plugins/custom-parser-plugin.js",
+        "./examples/plugins/global-utils-plugin.js",
+        "./examples/plugins/host-capabilities-plugin.js"
+    ]
+}
 ```
 
-Plugins will be automatically loaded when a prompt context is created.
+Plugins will be automatically loaded when GenAIScript starts.
 
 ## Using Custom Parser Plugin
 
@@ -359,9 +355,10 @@ beforeEach(() => {
 ### Plugin not available
 
 If a plugin function is not available, check:
-1. Plugin is registered before context creation
-2. Plugin setup function calls `extend()` correctly
-3. No errors during plugin loading (check trace logs)
+1. Plugin is listed in `genaiscript.config.json`
+2. Plugin file path is correct (relative or absolute)
+3. Plugin setup function calls `extend()` correctly
+4. No errors during plugin loading (check console output)
 
 ### Type errors
 

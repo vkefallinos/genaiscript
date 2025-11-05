@@ -7,8 +7,14 @@
  * - Host capabilities (database, API client, etc.)
  */
 
-// Note: In a real GenAIScript, these plugins would be registered
-// in the configuration or at the start of script execution
+// Note: To use these plugins, add them to genaiscript.config.json:
+// {
+//   "plugins": [
+//     "./examples/plugins/custom-parser-plugin.js",
+//     "./examples/plugins/global-utils-plugin.js",
+//     "./examples/plugins/host-capabilities-plugin.js"
+//   ]
+// }
 
 script({
     title: "Plugin Demo Script",
