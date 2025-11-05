@@ -40,6 +40,8 @@ import { loadZ3Client } from "./z3"
 import { genaiscriptDebug } from "./debug"
 import { resolveLanguageModelConfigurations } from "./config"
 import { deleteUndefinedValues } from "./cleaners"
+import { loadPlugins, applyPluginExtensions } from "./pluginloader"
+import type { PluginExtensionContext } from "./plugin"
 const dbg = genaiscriptDebug("promptcontext")
 
 /**
@@ -146,6 +148,32 @@ export async function createPromptContext(
                 grepTrace.endDetails()
             }
         },
+    }
+
+    // Load plugins before creating context objects
+    let pluginExtensions: PluginExtensionContext = {
+        global: {},
+        host: {},
+        workspace: {},
+        parsers: {},
+    }
+    
+    const config = runtimeHost.config
+    if (config?.plugins && config.plugins.length > 0) {
+        try {
+            dbg(`loading ${config.plugins.length} plugins`)
+            const projectRoot = prj.systemDir || process.cwd()
+            const plugins = await loadPlugins(config.plugins, projectRoot)
+            
+            // Apply plugin extensions
+            applyPluginExtensions(plugins, pluginExtensions)
+            
+            dbg(`applied extensions from ${plugins.length} plugins`)
+        } catch (error) {
+            // Log error but don't fail context creation
+            dbg(`failed to load plugins: ${error.message}`)
+            trace.error(`Failed to load plugins: ${error.message}`, error)
+        }
     }
 
     // Define retrieval operations
@@ -266,8 +294,15 @@ export async function createPromptContext(
         },
     }
 
+    // Merge plugin extensions into workspace
+    Object.assign(workspace, pluginExtensions.workspace)
+    
+    // Merge plugin extensions into parsers
+    Object.assign(parsers, pluginExtensions.parsers)
+
     // Define the host for executing commands, browsing, and other operations
     const promptHost: PromptHost = Object.freeze<PromptHost>({
+        ...pluginExtensions.host,
         logger: (category) => debug(category),
         mcpServer: async (options) =>
             await runtimeHost.mcp.startMcpServer(options, {
@@ -407,6 +442,10 @@ export async function createPromptContext(
     env.generator = ctx
     env.vars = proxifyEnvVars(env.vars)
     ctx.env = Object.freeze<ExpansionVariables>(env as ExpansionVariables)
+
+    // Merge plugin global extensions into the context
+    // Extensions to global are added as properties on the context itself
+    Object.assign(ctx, pluginExtensions.global)
 
     return ctx
 }
