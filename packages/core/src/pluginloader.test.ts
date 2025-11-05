@@ -34,7 +34,7 @@ describe("pluginloader", () => {
             const pluginCode = `
                 export default {
                     name: 'test-plugin',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         extend((context) => {
                             if (!context.global) context.global = {}
                             context.global.testFn = () => 'works'
@@ -58,7 +58,7 @@ describe("pluginloader", () => {
             const pluginCode = `
                 export default {
                     name: 'relative-plugin',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         extend((context) => {})
                     }
                 }
@@ -78,7 +78,7 @@ describe("pluginloader", () => {
             const pluginCode = `
                 export default {
                     name: 'mjs-plugin',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         extend((context) => {})
                     }
                 }
@@ -106,7 +106,7 @@ describe("pluginloader", () => {
             const pluginPath = join(testDir, "invalid-plugin.js")
             const pluginCode = `
                 export default {
-                    setup: (extend) => {}
+                    setup: (extend, hooks) => {}
                 }
             `
             writeFileSync(pluginPath, pluginCode)
@@ -145,7 +145,7 @@ describe("pluginloader", () => {
             const pluginCode = `
                 export const plugin = {
                     name: 'named-plugin',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         extend((context) => {})
                     }
                 }
@@ -162,7 +162,7 @@ describe("pluginloader", () => {
             const pluginCode = `
                 export default {
                     name: 'failing-plugin',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         throw new Error('Setup failed')
                     }
                 }
@@ -206,7 +206,7 @@ describe("pluginloader", () => {
             const pluginCode = `
                 export default {
                     name: 'multi-extend',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         extend((context) => {
                             if (!context.global) context.global = {}
                             context.global.fn1 = () => {}
@@ -240,7 +240,7 @@ describe("pluginloader", () => {
                 `
                 export default {
                     name: 'plugin1',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         extend((context) => {})
                     }
                 }
@@ -252,7 +252,7 @@ describe("pluginloader", () => {
                 `
                 export default {
                     name: 'plugin2',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         extend((context) => {})
                     }
                 }
@@ -277,7 +277,7 @@ describe("pluginloader", () => {
                 `
                 export default {
                     name: 'plugin1',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         extend((context) => {})
                     }
                 }
@@ -310,7 +310,7 @@ describe("pluginloader", () => {
             const pluginCode = `
                 export default {
                     name: 'test-plugin',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         extend((context) => {
                             if (!context.global) context.global = {}
                             context.global.testFn = () => 'result'
@@ -338,7 +338,7 @@ describe("pluginloader", () => {
                 `
                 export default {
                     name: 'plugin1',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         extend((context) => {
                             if (!context.global) context.global = {}
                             context.global.fn1 = () => 'p1'
@@ -353,7 +353,7 @@ describe("pluginloader", () => {
                 `
                 export default {
                     name: 'plugin2',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         extend((context) => {
                             if (!context.global) context.global = {}
                             context.global.fn2 = () => 'p2'
@@ -380,7 +380,7 @@ describe("pluginloader", () => {
             const pluginCode = `
                 export default {
                     name: 'order-plugin',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         extend((context) => {
                             if (!context.global) context.global = {}
                             context.global.order = ['first']
@@ -413,7 +413,7 @@ describe("pluginloader", () => {
             const pluginCode = `
                 export default {
                     name: 'failing-extension',
-                    setup: (extend) => {
+                    setup: (extend, hooks) => {
                         extend((context) => {
                             throw new Error('Extension failed')
                         })

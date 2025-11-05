@@ -17,7 +17,7 @@ export default {
      * @param extend - Function to register context extensions
      * @param options - Optional configuration passed to the plugin
      */
-    setup(extend, options) {
+    setup(extend, hooks, options) {
         console.log('Example plugin loaded with options:', options)
         
         // Register an extension that adds custom functionality

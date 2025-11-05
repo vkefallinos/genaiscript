@@ -13,10 +13,16 @@ A plugin is a JavaScript/TypeScript module that exports a plugin definition:
 ```javascript
 export default {
     name: 'my-plugin',
-    setup(extend, options) {
+    setup(extend, hooks, options) {
+        // Add extensions
         extend((context) => {
-            // Add your extensions here
             context.global.myFunction = () => { /* ... */ }
+        })
+        
+        // Register lifecycle hooks (optional)
+        hooks.beforeRun = hooks.beforeRun || []
+        hooks.beforeRun.push((context) => {
+            console.log('Plugin initializing...')
         })
     }
 }
@@ -54,7 +60,10 @@ npm plugins are specified by package name:
 ```typescript
 interface PluginDefinition {
     name: string
-    setup: (extend, options?) => void | Promise<void>
+    setup: (extend, hooks, options?) => void | Promise<void>
+    priority?: number  // Higher priority plugins load first (default: 0)
+    conflictResolution?: 'warn_override' | 'error' | 'merge' | 'priority'
+    dependencies?: string[]  // Names of plugins that must load first
 }
 ```
 
@@ -88,14 +97,36 @@ See `example-plugin.mjs` for a complete example that demonstrates:
 
 3. Your custom extensions will be available in your scripts.
 
+## Plugin Examples
+
+### Basic Examples
+- `example-plugin.mjs` - Complete example showing all extension points
+- `global-utils-plugin.js` - Utility functions for global context
+- `custom-parser-plugin.js` - Custom file format parser
+- `host-capabilities-plugin.js` - Host service extensions
+
+### Advanced Examples
+- `lifecycle-example-plugin.js` - Demonstrates lifecycle hooks (beforeRun, afterRun, onError)
+- `conflict-resolution-example.js` - Shows all conflict resolution strategies
+- `priority-dependency-example.js` - Plugin ordering and dependencies
+
+## Guides
+
+- [LIFECYCLE_HOOKS.md](./LIFECYCLE_HOOKS.md) - Complete guide to lifecycle hooks
+- [CONFLICT_RESOLUTION.md](./CONFLICT_RESOLUTION.md) - Handling property conflicts
+
 ## Best Practices
 
 1. **Naming**: Use descriptive, unique names for your plugins
-2. **Error Handling**: Handle errors gracefully in your plugin code
-3. **Documentation**: Document your plugin's API for users
-4. **Testing**: Write tests for your plugin functionality
-5. **Type Safety**: Provide TypeScript definitions when possible
-6. **Async Setup**: Use async setup if you need to perform I/O operations
+2. **Namespacing**: Prefix properties to avoid conflicts (e.g., `myPluginUtils`)
+3. **Error Handling**: Handle errors gracefully in your plugin code
+4. **Documentation**: Document your plugin's API for users
+5. **Testing**: Write tests for your plugin functionality
+6. **Type Safety**: Provide TypeScript definitions when possible
+7. **Async Setup**: Use async setup if you need to perform I/O operations
+8. **Lifecycle Hooks**: Use beforeRun for initialization, afterRun for cleanup
+9. **Conflict Strategy**: Choose appropriate conflict resolution strategy
+10. **Dependencies**: Declare dependencies to ensure proper load order
 
 ## Publishing Plugins
 
