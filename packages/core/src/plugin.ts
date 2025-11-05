@@ -29,10 +29,88 @@ export interface PluginExtensionContext {
 }
 
 /**
+ * Lifecycle hook context passed to lifecycle callbacks
+ */
+export interface PluginLifecycleContext {
+    /**
+     * Script name being executed
+     */
+    scriptName?: string
+
+    /**
+     * Additional context data
+     */
+    [key: string]: any
+}
+
+/**
+ * Lifecycle hook callback function
+ */
+export type LifecycleHook = (
+    context: PluginLifecycleContext
+) => void | Promise<void>
+
+/**
+ * Error context passed to onError hook
+ */
+export interface PluginErrorContext extends PluginLifecycleContext {
+    /**
+     * The error that occurred
+     */
+    error: Error
+}
+
+/**
+ * Lifecycle hooks that plugins can register
+ */
+export interface PluginLifecycleHooks {
+    /**
+     * Called before a script execution starts
+     */
+    beforeRun?: LifecycleHook[]
+
+    /**
+     * Called after a script execution completes
+     */
+    afterRun?: LifecycleHook[]
+
+    /**
+     * Called when an error occurs during execution
+     */
+    onError?: Array<(context: PluginErrorContext) => void | Promise<void>>
+}
+
+/**
+ * Conflict resolution strategy for handling duplicate property extensions
+ */
+export enum ConflictResolutionStrategy {
+    /**
+     * Higher priority plugin wins
+     */
+    PRIORITY = "priority",
+
+    /**
+     * Warn but allow override (last wins)
+     */
+    WARN_OVERRIDE = "warn_override",
+
+    /**
+     * Merge compatible types (objects, arrays)
+     */
+    MERGE = "merge",
+
+    /**
+     * Throw error on conflict
+     */
+    ERROR = "error",
+}
+
+/**
  * Function type for plugin setup callback
  */
 export type PluginSetupFunction = (
     extend: (callback: (context: PluginExtensionContext) => void) => void,
+    hooks: PluginLifecycleHooks,
     options?: Record<string, any>
 ) => void | Promise<void>
 
@@ -49,6 +127,23 @@ export interface PluginDefinition {
      * Setup function called when the plugin is loaded
      */
     setup: PluginSetupFunction
+
+    /**
+     * Priority for plugin execution order (higher = executed first)
+     * Default: 0
+     */
+    priority?: number
+
+    /**
+     * Conflict resolution strategy for this plugin
+     * Default: WARN_OVERRIDE
+     */
+    conflictResolution?: ConflictResolutionStrategy
+
+    /**
+     * Plugin dependencies (names of plugins that must be loaded first)
+     */
+    dependencies?: string[]
 }
 
 /**
@@ -76,7 +171,7 @@ export function plugin(definition: PluginDefinition): PluginDefinition {
 }
 
 /**
- * Loaded plugin with its extension callbacks
+ * Loaded plugin with its extension callbacks and lifecycle hooks
  */
 export interface LoadedPlugin {
     /**
@@ -93,4 +188,9 @@ export interface LoadedPlugin {
      * Extension callbacks registered by the plugin
      */
     extensions: Array<(context: PluginExtensionContext) => void>
+
+    /**
+     * Lifecycle hooks registered by the plugin
+     */
+    lifecycleHooks: PluginLifecycleHooks
 }
