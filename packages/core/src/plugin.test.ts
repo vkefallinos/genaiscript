@@ -7,7 +7,7 @@ describe("plugin", () => {
         test("should create a valid plugin definition", () => {
             const pluginDef = plugin({
                 name: "test-plugin",
-                setup: (extend) => {
+                setup: (extend, hooks) => {
                     extend((context) => {
                         context.global = { test: true }
                     })
@@ -19,7 +19,7 @@ describe("plugin", () => {
         })
 
         test("should preserve plugin definition properties", () => {
-            const setupFn = (extend: any) => {}
+            const setupFn = (extend: any, hooks: any) => {}
             const pluginDef = plugin({
                 name: "my-plugin",
                 setup: setupFn,
@@ -37,7 +37,7 @@ describe("plugin", () => {
             let extendCalled = false
             const pluginDef = plugin({
                 name: "test-plugin",
-                setup: (extend) => {
+                setup: (extend, hooks) => {
                     extendCalled = true
                     extend((context) => {})
                 },
@@ -45,7 +45,8 @@ describe("plugin", () => {
 
             // Simulate plugin loading
             const extend = (callback: any) => {}
-            await pluginDef.setup(extend)
+            const hooks = { beforeRun: [], afterRun: [], onError: [] }
+            await pluginDef.setup(extend, hooks)
 
             assert.strictEqual(extendCalled, true)
         })
@@ -54,7 +55,7 @@ describe("plugin", () => {
             let setupComplete = false
             const pluginDef = plugin({
                 name: "async-plugin",
-                setup: async (extend) => {
+                setup: async (extend, hooks) => {
                     await new Promise((resolve) => setTimeout(resolve, 1))
                     setupComplete = true
                     extend((context) => {})
@@ -62,7 +63,8 @@ describe("plugin", () => {
             })
 
             const extend = (callback: any) => {}
-            await pluginDef.setup(extend)
+            const hooks = { beforeRun: [], afterRun: [], onError: [] }
+            await pluginDef.setup(extend, hooks)
 
             assert.strictEqual(setupComplete, true)
         })
@@ -71,7 +73,7 @@ describe("plugin", () => {
             let extendCount = 0
             const pluginDef = plugin({
                 name: "multi-extend-plugin",
-                setup: (extend) => {
+                setup: (extend, hooks) => {
                     extend((context) => {
                         extendCount++
                     })
@@ -91,8 +93,9 @@ describe("plugin", () => {
             ) => {
                 callbacks.push(callback)
             }
+            const hooks = { beforeRun: [], afterRun: [], onError: [] }
 
-            await pluginDef.setup(extend)
+            await pluginDef.setup(extend, hooks)
 
             assert.strictEqual(callbacks.length, 3)
 
@@ -107,14 +110,15 @@ describe("plugin", () => {
             let receivedOptions: any = null
             const pluginDef = plugin({
                 name: "options-plugin",
-                setup: (extend, options) => {
+                setup: (extend, hooks, options) => {
                     receivedOptions = options
                 },
             })
 
             const testOptions = { foo: "bar", baz: 123 }
             const extend = (callback: any) => {}
-            await pluginDef.setup(extend, testOptions)
+            const hooks = { beforeRun: [], afterRun: [], onError: [] }
+            await pluginDef.setup(extend, hooks, testOptions)
 
             assert.deepEqual(receivedOptions, testOptions)
         })
@@ -124,7 +128,7 @@ describe("plugin", () => {
         test("should extend global context", async () => {
             const pluginDef = plugin({
                 name: "global-plugin",
-                setup: (extend) => {
+                setup: (extend, hooks) => {
                     extend((context) => {
                         if (!context.global) context.global = {}
                         context.global.myFunction = () => "test"
@@ -140,7 +144,7 @@ describe("plugin", () => {
                 callbacks.push(callback)
             }
 
-            await pluginDef.setup(extend)
+            await pluginDef.setup(extend, { beforeRun: [], afterRun: [], onError: [] })
 
             const context: PluginExtensionContext = {}
             callbacks[0](context)
@@ -152,7 +156,7 @@ describe("plugin", () => {
         test("should extend workspace context", async () => {
             const pluginDef = plugin({
                 name: "workspace-plugin",
-                setup: (extend) => {
+                setup: (extend, hooks) => {
                     extend((context) => {
                         if (!context.workspace) context.workspace = {}
                         context.workspace.customQuery = async () => []
@@ -168,7 +172,7 @@ describe("plugin", () => {
                 callbacks.push(callback)
             }
 
-            await pluginDef.setup(extend)
+            await pluginDef.setup(extend, { beforeRun: [], afterRun: [], onError: [] })
 
             const context: PluginExtensionContext = {}
             callbacks[0](context)
@@ -182,7 +186,7 @@ describe("plugin", () => {
         test("should extend parsers context", async () => {
             const pluginDef = plugin({
                 name: "parsers-plugin",
-                setup: (extend) => {
+                setup: (extend, hooks) => {
                     extend((context) => {
                         if (!context.parsers) context.parsers = {}
                         context.parsers.readProto = async (file: string) => ({})
@@ -198,7 +202,7 @@ describe("plugin", () => {
                 callbacks.push(callback)
             }
 
-            await pluginDef.setup(extend)
+            await pluginDef.setup(extend, { beforeRun: [], afterRun: [], onError: [] })
 
             const context: PluginExtensionContext = {}
             callbacks[0](context)
@@ -209,7 +213,7 @@ describe("plugin", () => {
         test("should extend host context", async () => {
             const pluginDef = plugin({
                 name: "host-plugin",
-                setup: (extend) => {
+                setup: (extend, hooks) => {
                     extend((context) => {
                         if (!context.host) context.host = {}
                         context.host.customService = () => "service"
@@ -225,7 +229,7 @@ describe("plugin", () => {
                 callbacks.push(callback)
             }
 
-            await pluginDef.setup(extend)
+            await pluginDef.setup(extend, { beforeRun: [], afterRun: [], onError: [] })
 
             const context: PluginExtensionContext = {}
             callbacks[0](context)
@@ -237,7 +241,7 @@ describe("plugin", () => {
         test("should allow multiple context extensions", async () => {
             const pluginDef = plugin({
                 name: "multi-context-plugin",
-                setup: (extend) => {
+                setup: (extend, hooks) => {
                     extend((context) => {
                         if (!context.global) context.global = {}
                         if (!context.workspace) context.workspace = {}
@@ -260,7 +264,7 @@ describe("plugin", () => {
                 callbacks.push(callback)
             }
 
-            await pluginDef.setup(extend)
+            await pluginDef.setup(extend, { beforeRun: [], afterRun: [], onError: [] })
 
             const context: PluginExtensionContext = {}
             callbacks[0](context)

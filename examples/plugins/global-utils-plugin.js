@@ -13,7 +13,7 @@
 export default {
     name: "global-utils-plugin",
 
-    setup(extend, options) {
+    setup(extend, hooks, options) {
         const trace = options?.trace
 
         extend((context) => {

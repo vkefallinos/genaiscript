@@ -202,26 +202,138 @@ See `examples/plugins/` directory for:
 5. Applied in plugin registration order
 6. Each plugin's extensions applied in order
 
+## Lifecycle Hooks (Issue #4)
+
+Plugins can register lifecycle hooks to execute code at specific points during script execution.
+
+### Available Hooks
+
+1. **beforeRun**: Called before a script execution starts
+2. **afterRun**: Called after a script execution completes
+3. **onError**: Called when an error occurs during execution
+
+### Using Lifecycle Hooks
+
+```javascript
+export default {
+    name: 'lifecycle-plugin',
+    setup(extend, hooks) {
+        // Register beforeRun hook
+        hooks.beforeRun = hooks.beforeRun || []
+        hooks.beforeRun.push(async (context) => {
+            console.log(`Starting script: ${context.scriptName}`)
+            // Perform initialization
+        })
+
+        // Register afterRun hook
+        hooks.afterRun = hooks.afterRun || []
+        hooks.afterRun.push(async (context) => {
+            console.log('Script completed')
+            // Perform cleanup
+        })
+
+        // Register onError hook
+        hooks.onError = hooks.onError || []
+        hooks.onError.push(async (context) => {
+            console.error(`Error occurred: ${context.error.message}`)
+            // Log error, send notifications, etc.
+        })
+    }
+}
+```
+
+### Hook Execution Order
+
+- Hooks execute in plugin priority order (higher priority first)
+- Multiple hooks from the same plugin execute in registration order
+- `beforeRun` hooks fail fast (error stops execution)
+- `afterRun` and `onError` hooks are resilient (errors are logged but don't stop execution)
+
+## Conflict Resolution (Issue #4)
+
+When multiple plugins extend the same context property, the system handles conflicts based on the configured strategy.
+
+### Conflict Resolution Strategies
+
+1. **WARN_OVERRIDE** (default): Warns when a conflict occurs but allows override. Last plugin wins.
+2. **ERROR**: Throws an error when a conflict is detected.
+3. **MERGE**: Deep merges compatible types (objects, arrays).
+4. **PRIORITY**: Higher priority plugin wins (respects plugin order).
+
+### Configuring Conflict Resolution
+
+```javascript
+export default {
+    name: 'my-plugin',
+    conflictResolution: 'merge', // or 'warn_override', 'error', 'priority'
+    setup(extend, hooks) {
+        extend((context) => {
+            context.global = { myProperty: 'value' }
+        })
+    }
+}
+```
+
+### Conflict Detection
+
+The system tracks which plugin set each property and warns/errors when conflicts occur:
+
+```
+[Plugin Warning] Plugin 'plugin2' is overriding 'global.myFunction' previously set by plugin 'plugin1'
+```
+
+## Plugin Priorities and Dependencies (Issue #4)
+
+### Setting Priority
+
+Higher priority plugins load and execute first:
+
+```javascript
+export default {
+    name: 'high-priority-plugin',
+    priority: 100, // Default is 0
+    setup(extend, hooks) {
+        // This plugin's extensions and hooks run before lower priority plugins
+    }
+}
+```
+
+### Declaring Dependencies
+
+Plugins can declare dependencies to ensure proper load order:
+
+```javascript
+export default {
+    name: 'dependent-plugin',
+    dependencies: ['base-plugin', 'utils-plugin'],
+    setup(extend, hooks) {
+        // base-plugin and utils-plugin are guaranteed to load first
+    }
+}
+```
+
+### Dependency Resolution
+
+- Dependencies are resolved using topological sort
+- Circular dependencies are detected and reported with clear error messages
+- Missing dependencies throw errors during loading
+- Dependencies override priority when both are specified
+
 ## Future Enhancements
 
 The current implementation provides the foundation for:
 
-1. **Lifecycle Hooks** (Issue #3)
-   - beforeRun, afterRun, onError hooks
-   - Plugin initialization and cleanup
-
-2. **Conflict Resolution** (Issue #3)
-   - Priority-based extension ordering
-   - Namespace isolation
-   - Override policies
-
-3. **Plugin Discovery**
+1. **Plugin Discovery**
    - Auto-discovery of plugins in specific directories
    - Plugin marketplace integration
 
-4. **Hot Reloading**
+2. **Hot Reloading**
    - Development mode with plugin hot-reload
    - Configuration file watching
+
+3. **Plugin Sandboxing**
+   - Restricted API access for untrusted plugins
+   - Permission system for sensitive operations
 
 ## Migration Path
 
@@ -251,10 +363,47 @@ The plugin system is designed to be:
 - **Test Coverage**: ~450 test lines across 3 test files
 - **Documentation**: Comprehensive examples and README
 
+## Sandboxing Considerations (Issue #4)
+
+### Current Access Level
+
+Plugins currently have full access to the GenAIScript framework APIs. This includes:
+
+**Allowed:**
+- Extending global, host, workspace, and parsers contexts
+- Registering lifecycle hooks
+- Access to all Node.js APIs
+- Reading and writing files
+- Making network requests
+
+**Security Implications:**
+- Plugins run with the same permissions as the GenAIScript process
+- Malicious plugins can access sensitive data
+- Plugins can modify or delete files
+
+### Best Practices
+
+Until sandboxing is implemented, follow these guidelines:
+
+1. **Only use trusted plugins**: Install plugins from reputable sources
+2. **Review plugin code**: Check the source code before installing
+3. **Use scoped packages**: Prefer official or organization-scoped plugins
+4. **Monitor plugin behavior**: Watch for unexpected file access or network requests
+5. **Report suspicious plugins**: Contact maintainers if you find malicious code
+
+### Future Sandboxing
+
+Future versions may include:
+- Permission system (file access, network access, etc.)
+- Capability-based security model
+- Plugin signature verification
+- Isolated execution contexts
+
 ## Compliance
 
-This implementation satisfies all requirements from issue #2:
+This implementation satisfies all requirements from issues #2, #3, and #4:
 
+**Issue #2 - Core Plugin API:**
 - ✅ Define plugin registration interface
 - ✅ Configuration file support for plugins array
 - ✅ Plugin discovery and loading (local + npm)
@@ -262,3 +411,18 @@ This implementation satisfies all requirements from issue #2:
 - ✅ Comprehensive unit tests
 - ✅ TypeScript type definitions
 - ✅ Extensible design for future enhancements
+
+**Issue #3 - Extension Mechanism:**
+- ✅ Extend global, host, workspace, parsers contexts
+- ✅ Multiple extensions per plugin
+- ✅ Context extension validation
+
+**Issue #4 - Lifecycle & Conflict Resolution:**
+- ✅ Async plugin initialization
+- ✅ Lifecycle hooks (beforeRun, afterRun, onError)
+- ✅ Multiple hooks per plugin
+- ✅ Conflict resolution strategies (WARN_OVERRIDE, ERROR, MERGE, PRIORITY)
+- ✅ Plugin priorities and ordering
+- ✅ Dependency resolution with circular detection
+- ✅ Sandboxing documentation
+- ✅ Comprehensive tests for all features

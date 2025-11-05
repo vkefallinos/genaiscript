@@ -13,7 +13,7 @@
 export default {
     name: "custom-parser-plugin",
 
-    setup(extend, options) {
+    setup(extend, hooks, options) {
         const trace = options?.trace
 
         extend((context) => {

@@ -13,7 +13,7 @@
 export default {
     name: "host-capabilities-plugin",
 
-    setup(extend, options) {
+    setup(extend, hooks, options) {
         const trace = options?.trace
         const cancellationToken = options?.cancellationToken
 
