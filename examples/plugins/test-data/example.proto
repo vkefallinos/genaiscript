@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package example;
+
+// User message definition
+message User {
+    int32 id = 1;
+    string name = 2;
+    string email = 3;
+    bool active = 4;
+}
+
+// Get user request
+message GetUserRequest {
+    int32 id = 1;
+}
+
+// Create user request
+message CreateUserRequest {
+    string name = 1;
+    string email = 2;
+}
+
+// User list response
+message UserListResponse {
+    repeated User users = 1;
+    int32 total = 2;
+}
+
+// Status enum
+enum Status {
+    UNKNOWN = 0;
+    ACTIVE = 1;
+    INACTIVE = 2;
+    DELETED = 3;
+}
+
+// User service definition
+service UserService {
+    rpc GetUser (GetUserRequest) returns (User);
+    rpc CreateUser (CreateUserRequest) returns (User);
+    rpc ListUsers (google.protobuf.Empty) returns (UserListResponse);
+}
+
+// Admin service definition
+service AdminService {
+    rpc DeleteUser (GetUserRequest) returns (google.protobuf.Empty);
+}
